@@ -38,24 +38,58 @@ class DefinitionPart:
         cur = con.cursor()
         tables = sqlu.get_tables(cur)
 
-        latest_version = 1 # todo
+        # get table version
+        latest_version = -1
+        for t in {t for t in tables if t.startswith(self.name)}:
+            version = int(t.replace(self.name + '-v', ''))
+            if version > latest_version:
+                latest_version = version
 
-        if latest_version == 1:
+        if latest_version == -1:
             for i, configuration in enumerate(configurations):
                 configuration['id'] = i
         else:
-            ... # todo
 
-        table_name = self.name + f'-v{latest_version}'
+            # find next id for new configurations
+            all_ids = []
+            for i in range(latest_version + 1):
+                _table_name = self.name + f'-v{i}'
+                cur.execute(f"SELECT DISTINCT id FROM '{_table_name}'")
+                all_ids.extend([x[0] for x in cur.fetchall()])
+            next_id = max(all_ids) + 1
 
+            # assign ids to new configurations / find ids for existing configurations
+            for configuration in configurations:
+                _id = None
 
-        if table_name not in tables:
-            sqlu.create_table(cur, table_name, list(self._properties.keys()) + ['id INTEGER PRIMARY KEY'])
-            conf_string = ', '.join(['?'] * (len(self._properties) + 1))
-            column_names = ', '.join(list(self._properties.keys()) + ['id'])
-            cur.executemany(f"INSERT INTO '{table_name}' ({column_names}) VALUES ({conf_string})", [list(c.values()) for c in configurations])
-        else:
-            ... # todo
+                for i in range(latest_version, -1, -1):
+                    table_name = self.name + f'-v{i}'
+
+                    # check if properties match the table schema
+                    cur.execute(f"PRAGMA table_info('{table_name}')")
+                    columns = set([x[1] for x in cur.fetchall()])
+
+                    if not set(configuration.keys()) == columns - {'id'} :
+                        continue
+
+                    # check if configuration exists
+                    cur.execute(f"SELECT id FROM '{table_name}' WHERE {' AND '.join([f'{k}=?' for k in configuration.keys()])}", list(configuration.values()))
+                    _id = cur.fetchone()
+                    if _id:
+                        break
+
+                if _id:
+                    configuration['id'] = _id[0]
+                else:
+                    configuration['id'] = next_id
+                    next_id += 1
+
+        table_name = self.name + f'-v{latest_version + 1}'
+
+        sqlu.create_table(cur, table_name, list(self._properties.keys()) + ['id INTEGER PRIMARY KEY'])
+        conf_string = ', '.join(['?'] * (len(self._properties) + 1))
+        column_names = ', '.join(list(self._properties.keys()) + ['id'])
+        cur.executemany(f"INSERT INTO '{table_name}' ({column_names}) VALUES ({conf_string})", [list(c.values()) for c in configurations])
 
         con.commit()
         con.close()
