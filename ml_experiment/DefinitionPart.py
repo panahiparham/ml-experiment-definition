@@ -1,6 +1,4 @@
 import os
-import sqlite3
-
 from itertools import product
 
 from typing import Dict, Iterable, Set
@@ -33,7 +31,7 @@ class DefinitionPart:
 
         save_path = self.get_results_path()
         db_path = os.path.join(save_path, 'metadata.db')
-        con = _init_db(db_path)
+        con = sqlu.init_db(db_path)
         cur = con.cursor()
         tables = sqlu.get_tables(cur)
 
@@ -93,11 +91,6 @@ class DefinitionPart:
         con.commit()
         con.close()
 
-
-def _init_db(db_path: str):
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    con = sqlite3.connect(db_path)
-    return con
 
 def generate_configurations(properties: Dict[str, Set[ValueType]]):
     for configuration in product(*properties.values()):
