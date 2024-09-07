@@ -22,3 +22,8 @@ class DefinitionPart:
 
     def add_sweepable_property(self, key: str, values: Iterable[ValueType]):
         self._properties[key] |= set(values)
+
+    def get_results_path(self) -> str:
+        import __main__
+        experiment_name = __main__.__file__.split('/')[-2]
+        return os.path.join(self.base_path, 'results', experiment_name)
