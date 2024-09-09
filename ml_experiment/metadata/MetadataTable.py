@@ -78,6 +78,6 @@ class MetadataTable:
         table_name = self.get_table_name()
         conf_str = ', '.join(['?'] * len(cols))
         col_names = ', '.join(cols)
-        conf_values = [list(c.values()) for c in configurations]
+        conf_values = [[c[k] for k in cols] for c in configurations]
 
         cur.executemany(f"INSERT INTO '{table_name}' ({col_names}) VALUES ({conf_str})", conf_values)
