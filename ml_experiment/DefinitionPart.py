@@ -1,12 +1,11 @@
 import os
-import sqlite3
-
 from itertools import product
 
 from typing import Dict, Iterable, Set
 from collections import defaultdict
 
 import ml_experiment._utils.sqlite as sqlu
+from ml_experiment.metadata.MetadataTableRegistry import MetadataTableRegistry
 
 ValueType = int | float | str | bool
 
@@ -33,71 +32,47 @@ class DefinitionPart:
 
         save_path = self.get_results_path()
         db_path = os.path.join(save_path, 'metadata.db')
-        con = _init_db(db_path)
+        con = sqlu.init_db(db_path)
         cur = con.cursor()
-        tables = sqlu.get_tables(cur)
 
-        # get table version
-        latest_version = -1
-        for t in {t for t in tables if t.startswith(self.name)}:
-            version = int(t.replace(self.name + '-v', ''))
-            if version > latest_version:
-                latest_version = version
+        table_registry = MetadataTableRegistry()
 
-        if latest_version == -1:
-            for i, configuration in enumerate(configurations):
-                configuration['id'] = i
-        else:
+        # tag configurations with the appropriate configuration id
+        # grabbing from prior tables where possible, or generating a unique id for new configs
+        next_config_id = table_registry.get_max_configuration_id(cur, self.name) + 1
+        for configuration in configurations:
+            existing_id = table_registry.get_configuration_id(cur, self.name, configuration)
 
-            # find next id for new configurations
-            all_ids = []
-            for i in range(latest_version + 1):
-                _table_name = self.name + f'-v{i}'
-                cur.execute(f"SELECT DISTINCT id FROM '{_table_name}'")
-                all_ids.extend([x[0] for x in cur.fetchall()])
-            next_id = max(all_ids) + 1
+            if existing_id is not None:
+                configuration['id'] = existing_id
 
-            # assign ids to new configurations / find ids for existing configurations
-            for configuration in configurations:
-                _id = None
+            else:
+                configuration['id'] = next_config_id
+                next_config_id += 1
 
-                for i in range(latest_version, -1, -1):
-                    table_name = self.name + f'-v{i}'
 
-                    # check if properties match the table schema
-                    cur.execute(f"PRAGMA table_info('{table_name}')")
-                    columns = set([x[1] for x in cur.fetchall()])
+        # determine whether we should build a new table
+        # and what version to call that table
+        latest_table = table_registry.get_latest_version(cur, self.name)
 
-                    if not set(configuration.keys()) == columns - {'id'} :
-                        continue
+        next_table_version = 0
+        skip_build = False
+        if latest_table is not None:
+            next_table_version = latest_table.version + 1
 
-                    # check if configuration exists
-                    cur.execute(f"SELECT id FROM '{table_name}' WHERE {' AND '.join([f'{k}=?' for k in configuration.keys()])}", list(configuration.values()))
-                    _id = cur.fetchone()
-                    if _id:
-                        break
+            # check if the current latest table contains exactly the same configs
+            expected_config_ids = set(c['id'] for c in configurations)
+            current_config_ids = latest_table.get_configuration_ids(cur)
 
-                if _id:
-                    configuration['id'] = _id[0]
-                else:
-                    configuration['id'] = next_id
-                    next_id += 1
+            skip_build = expected_config_ids == current_config_ids
 
-        table_name = self.name + f'-v{latest_version + 1}'
-
-        sqlu.create_table(cur, table_name, list(self._properties.keys()) + ['id INTEGER PRIMARY KEY'])
-        conf_string = ', '.join(['?'] * (len(self._properties) + 1))
-        column_names = ', '.join(list(self._properties.keys()) + ['id'])
-        cur.executemany(f"INSERT INTO '{table_name}' ({column_names}) VALUES ({conf_string})", [list(c.values()) for c in configurations])
+        if not skip_build:
+            table = table_registry.create_new_table(cur, self.name, next_table_version, self._properties.keys())
+            table.add_configurations(cur, configurations)
 
         con.commit()
         con.close()
 
-
-def _init_db(db_path: str):
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    con = sqlite3.connect(db_path)
-    return con
 
 def generate_configurations(properties: Dict[str, Set[ValueType]]):
     for configuration in product(*properties.values()):
