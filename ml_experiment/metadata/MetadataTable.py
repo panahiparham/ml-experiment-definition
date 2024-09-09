@@ -23,7 +23,7 @@ class MetadataTable:
             return self._cols
 
         res = (
-            cur.execute("PRAGMA table_info('?')", self.get_table_name())
+            cur.execute(f"PRAGMA table_info('{self.get_table_name()}')")
             .fetchall()
         )
         self._cols = set(x[1] for x in res)
@@ -40,7 +40,7 @@ class MetadataTable:
             return self._configuration_ids
 
         res = (
-            cur.execute("SELECT DISTINCT id FROM '?'", self.get_table_name())
+            cur.execute(f"SELECT DISTINCT id FROM '{self.get_table_name()}'")
             .fetchall()
         )
         self._configuration_ids = set(x[0] for x in res)
