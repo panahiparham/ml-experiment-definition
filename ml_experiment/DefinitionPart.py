@@ -59,15 +59,15 @@ class DefinitionPart:
         next_config_id = table_registry.get_max_configuration_id(cur, self.name) + 1
         for configuration in configurations:
             config_query = self._get_configuration_without_priors(configuration)
-            existing_id = table_registry.get_configuration_id(cur, self.name, config_query)
 
-            if existing_id is not None:
-                configuration['id'] = existing_id
+            configuration['id'] = (
+                table_registry.get_configuration_id(cur, self.name, configuration)
+                    .flat_otherwise(lambda: table_registry.get_configuration_id(cur, self.name, config_query))
+                    .or_else(next_config_id)
+            )
 
-            else:
-                configuration['id'] = next_config_id
+            if configuration['id'] == next_config_id:
                 next_config_id += 1
-
 
         # determine whether we should build a new table
         # and what version to call that table

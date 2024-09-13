@@ -2,8 +2,8 @@ import sqlite3
 import ml_experiment._utils.sqlite as sqlu
 
 from typing import Dict, Iterable
+from ml_experiment._utils.maybe import Maybe
 from ml_experiment.metadata.MetadataTable import MetadataTable, ValueType
-
 
 class MetadataTableRegistry:
     def __init__(self):
@@ -73,11 +73,11 @@ class MetadataTableRegistry:
         return max(all_ids)
 
 
-    def get_configuration_id(self, cur: sqlite3.Cursor, part_name: str, configuration: Dict[str, ValueType]) -> int | None:
+    def get_configuration_id(self, cur: sqlite3.Cursor, part_name: str, configuration: Dict[str, ValueType]) -> Maybe[int]:
         latest = self.get_latest_version(cur, part_name)
 
         if latest is None:
-            return None
+            return Maybe(None)
 
         # walk backwards starting from the latest version
         # if any table contains an id, then stop
@@ -89,9 +89,9 @@ class MetadataTableRegistry:
 
             conf_id = table.get_configuration_id(cur, configuration)
             if conf_id is not None:
-                return conf_id
+                return Maybe(conf_id)
 
-        return None
+        return Maybe(None)
 
 
     def create_new_table(self, cur: sqlite3.Cursor, part_name: str, version: int, config_params: Iterable[str]) -> MetadataTable:
