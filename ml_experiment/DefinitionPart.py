@@ -15,12 +15,29 @@ class DefinitionPart:
         self.base_path = base or os.getcwd()
 
         self._properties: Dict[str, Set[ValueType]] = defaultdict(set)
+        self._prior_values: Dict[str, ValueType] = {}
 
-    def add_property(self, key: str, value: ValueType):
+    def add_property(
+        self,
+        key: str,
+        value: ValueType,
+        assume_prior_value: ValueType | None = None,
+    ):
         self._properties[key].add(value)
 
-    def add_sweepable_property(self, key: str, values: Iterable[ValueType]):
+        if assume_prior_value is not None:
+            self._prior_values[key] = assume_prior_value
+
+    def add_sweepable_property(
+        self,
+        key: str,
+        values: Iterable[ValueType],
+        assume_prior_value: ValueType | None = None,
+    ):
         self._properties[key] |= set(values)
+
+        if assume_prior_value is not None:
+            self._prior_values[key] = assume_prior_value
 
     def get_results_path(self) -> str:
         import __main__
@@ -41,15 +58,16 @@ class DefinitionPart:
         # grabbing from prior tables where possible, or generating a unique id for new configs
         next_config_id = table_registry.get_max_configuration_id(cur, self.name) + 1
         for configuration in configurations:
-            existing_id = table_registry.get_configuration_id(cur, self.name, configuration)
+            config_query = self._get_configuration_without_priors(configuration)
 
-            if existing_id is not None:
-                configuration['id'] = existing_id
+            configuration['id'] = (
+                table_registry.get_configuration_id(cur, self.name, configuration)
+                    .flat_otherwise(lambda: table_registry.get_configuration_id(cur, self.name, config_query))
+                    .or_else(next_config_id)
+            )
 
-            else:
-                configuration['id'] = next_config_id
+            if configuration['id'] == next_config_id:
                 next_config_id += 1
-
 
         # determine whether we should build a new table
         # and what version to call that table
@@ -72,6 +90,24 @@ class DefinitionPart:
 
         con.commit()
         con.close()
+
+    def _get_configuration_without_priors(self, configuration: Dict[str, ValueType]):
+        """
+        When a new property is introduced that has an assumed prior value,
+        then we need to search for configuration ids without the new
+        property and associated those with the new config.
+
+        This function gives back the configuration to search for to
+        obtain an id.
+        """
+        out = {}
+        for k, v in configuration.items():
+            if k in self._prior_values and v == self._prior_values[k]:
+                continue
+
+            out[k] = v
+
+        return out
 
 
 def generate_configurations(properties: Dict[str, Set[ValueType]]):
