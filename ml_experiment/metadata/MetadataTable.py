@@ -70,6 +70,17 @@ class MetadataTable:
 
         return res[0]
 
+    def get_configuration(self, cur: sqlite3.Cursor, config_id: int) -> Dict[str, ValueType]:
+        table_name = self.get_table_name()
+        cols = list(self.get_columns(cur))
+        col_str = ', '.join(cols)
+        res = (
+            cur.execute(f"SELECT {col_str} FROM '{table_name}' WHERE id=?", (config_id,))
+            .fetchone()
+        )
+
+        return {cols[i]: res[i] for i in range(len(cols))}
+
 
     def add_configurations(self, cur: sqlite3.Cursor, configurations: Iterable[Dict[str, ValueType]]):
         # get an ordered list of cols
