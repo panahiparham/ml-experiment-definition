@@ -4,13 +4,13 @@ from ml_experiment.DefinitionPart import DefinitionPart
 from ml_experiment.ExperimentDefinition import ExperimentDefinition
 
 
-def test_ExperimentDefinition():
+def test_ExperimentDefinition(tmp_path):
 
     # build dummy experiment
     exp_name = 'dummy_experiment'
     part_name = 'qrc'
 
-    part = stubbed_DefinitionPart(exp_name, part_name)
+    part = stubbed_DefinitionPart(exp_name, part_name, base = str(tmp_path))
     part.add_sweepable_property('alpha', (2**-i for i in range(3, 8)))
     part.add_sweepable_property('beta', [0.5, 1.0, 2.0])
     part.commit()
@@ -21,7 +21,7 @@ def test_ExperimentDefinition():
     config_ids = [1, 2, 3]
     seeds = [1, 2]
 
-    exp = stubbed_ExperimentDefinition(exp_name, part_name, version)
+    exp = stubbed_ExperimentDefinition(exp_name, part_name, version, base = str(tmp_path))
 
     config = exp.get_config(0)
     assert config == {'alpha': 0.125, 'beta': 0.5, 'id': 0}
