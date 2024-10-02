@@ -71,6 +71,9 @@ class MetadataTable:
         return res[0]
 
     def get_configuration(self, cur: sqlite3.Cursor, config_id: int) -> Dict[str, ValueType]:
+        if config_id not in self.get_configuration_ids(cur):
+            raise ValueError(f"config_id <{config_id}> is not in table <{self.get_table_name()}>")
+
         table_name = self.get_table_name()
         cols = list(self.get_columns(cur))
         col_str = ', '.join(cols)

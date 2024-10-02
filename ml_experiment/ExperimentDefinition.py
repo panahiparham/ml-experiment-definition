@@ -20,10 +20,6 @@ class ExperimentDefinition:
 
         with sqlite3.connect(db_path) as con:
             cur = con.cursor()
-            # ensure config_id exists
-            assert config_id in self.table.get_configuration_ids(cur),\
-            f'config_id not in table {self.table.get_table_name()}'
-
             return self.table.get_configuration(cur, config_id)
 
 
@@ -34,12 +30,6 @@ class ExperimentDefinition:
 
         with sqlite3.connect(db_path) as con:
             cur = con.cursor()
-            # ensure config_ids exist
-            assert all(
-                config_id in self.table.get_configuration_ids(cur)
-                for config_id in config_ids
-            ), f'config_ids not in table {self.table.get_table_name()}'
-
             _c = [
                 self.table.get_configuration(cur, config_id)
                 for config_id in config_ids
