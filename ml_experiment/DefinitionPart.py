@@ -5,6 +5,7 @@ from typing import Dict, Iterable, Set
 from collections import defaultdict
 
 import ml_experiment._utils.sqlite as sqlu
+from ml_experiment._utils.path import get_results_path
 from ml_experiment.metadata.MetadataTableRegistry import MetadataTableRegistry
 
 ValueType = int | float | str | bool
@@ -13,6 +14,7 @@ class DefinitionPart:
     def __init__(self, name: str, base: str | None = None):
         self.name = name
         self.base_path = base or os.getcwd()
+        self.get_results_path = get_results_path
 
         self._properties: Dict[str, Set[ValueType]] = defaultdict(set)
         self._prior_values: Dict[str, ValueType] = {}
@@ -39,15 +41,10 @@ class DefinitionPart:
         if assume_prior_value is not None:
             self._prior_values[key] = assume_prior_value
 
-    def get_results_path(self) -> str:
-        import __main__
-        experiment_name = __main__.__file__.split('/')[-2]
-        return os.path.join(self.base_path, 'results', experiment_name)
-
     def commit(self):
         configurations = list(generate_configurations(self._properties))
 
-        save_path = self.get_results_path()
+        save_path = self.get_results_path(self.base_path)
         db_path = os.path.join(save_path, 'metadata.db')
         con = sqlu.init_db(db_path)
         cur = con.cursor()

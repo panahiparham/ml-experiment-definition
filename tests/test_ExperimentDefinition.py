@@ -50,13 +50,13 @@ class stubbed_DefinitionPart(DefinitionPart):
         self.exp_name = exp_name
         super().__init__(name, base)
 
-    def get_results_path(self) -> str:
-        return os.path.join(self.base_path, 'results', self.exp_name)
+    def get_results_path(self, base_path) -> str:
+        return os.path.join(base_path, 'results', self.exp_name)
 
 class stubbed_ExperimentDefinition(ExperimentDefinition):
     def __init__(self, exp_name: str, part_name: str, version: int, base: str | None = None):
         self.exp_name = exp_name
         super().__init__(part_name, version, base)
 
-    def get_results_path(self) -> str:
-        return os.path.join(self.base_path, 'results', self.exp_name)
+    def get_results_path(self, base_path) -> str:
+        return os.path.join(base_path, 'results', self.exp_name)
