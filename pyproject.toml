@@ -1,21 +1,3 @@
-[tool]
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "0.0.0"
-tag_format = "$version"
-version_files = ["pyproject.toml"]
-
-[tool.ruff.lint]
-select = ['F', 'E', 'W', 'B']
-ignore = ['E501', 'E701', 'B023']
-
-[tool.pyright]
-include = ['ml_experiment']
-venvPath = '.'
-venv = '.venv'
-typeCheckingMode = 'standard'
-useLibraryCodeForTypes = true
-
 [project]
 name = "ml-experiment-definition"
 version = "0.0.0"
@@ -44,3 +26,22 @@ dev = [
     "commitizen",
     "pre-commit",
 ]
+
+[tool]
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.0"
+tag_format = "$version"
+version_files = ["pyproject.toml"]
+
+[tool.ruff.lint]
+select = ['F', 'E', 'W', 'B']
+ignore = ['E501', 'E701', 'B023']
+
+[tool.pyright]
+include = ['ml_experiment']
+venvPath = '.'
+venv = '.venv'
+typeCheckingMode = 'standard'
+useLibraryCodeForTypes = true
+
