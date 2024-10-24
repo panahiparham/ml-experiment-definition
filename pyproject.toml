@@ -1,3 +1,6 @@
+# [build-system]
+# requires = ['setuptools']
+
 [project]
 name = "ml-experiment-definition"
 version = "0.0.0"
@@ -28,6 +31,9 @@ dev = [
 ]
 
 [tool]
+[tool.setuptools]
+packages = ["ml_experiment"]
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.0.0"
