@@ -4,7 +4,6 @@ test.py
 **/__pycache__/
 .vscode/
 results/
-experiments/
 .pytest_cache/
 .venv/
 
