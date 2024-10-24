@@ -7,3 +7,8 @@ results/
 experiments/
 .pytest_cache/
 .venv/
+
+# ignore build files
+build
+build/
+**.egg-info/
