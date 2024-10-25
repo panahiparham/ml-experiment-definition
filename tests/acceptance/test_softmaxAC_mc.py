@@ -2,8 +2,8 @@ from ml_experiment.ExperimentDefinition import ExperimentDefinition
 from ml_experiment.DefinitionPart import DefinitionPart
 
 
-def init_softmaxAC_mc(alphas: list[float], taus: list[float]):
-    softmaxAC = DefinitionPart("softmaxAC-mc")
+def init_softmaxAC_mc(tmp_path, alphas: list[float], taus: list[float]):
+    softmaxAC = DefinitionPart("softmaxAC-mc", base=str(tmp_path))
     softmaxAC.add_sweepable_property("alpha", alphas)
     softmaxAC.add_sweepable_property("tau", taus)
     softmaxAC.add_property("n_step", 1)
@@ -14,7 +14,7 @@ def init_softmaxAC_mc(alphas: list[float], taus: list[float]):
     softmaxAC.commit()
 
 
-def test_read_configs():
+def test_read_configs(tmp_path):
     """
     Test that we can retrieve the configurations from the experiment definition.
     """
@@ -44,10 +44,10 @@ def test_read_configs():
     )
 
     # write experiment definition to table
-    init_softmaxAC_mc(alphas, taus)
+    init_softmaxAC_mc(tmp_path, alphas, taus)
 
     # make Experiment object (versions start at 0)
-    softmaxAC_mc = ExperimentDefinition("softmaxAC-mc", 0)
+    softmaxAC_mc = ExperimentDefinition(part_name="softmaxAC-mc", version=0, base=str(tmp_path))
 
     # TODO: This can't be the intended way to get the configurations?
     num_configs = len(alphas) * len(taus)
