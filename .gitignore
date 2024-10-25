@@ -7,3 +7,4 @@ results/
 experiments/
 .pytest_cache/
 .venv/
+.coverage
