@@ -1,8 +1,9 @@
 from ml_experiment import DefinitionPart as dp
 
 
-def init_esarsa_mc(alphas: list[float], epsilons: list[float], n_steps: list[int]):
-    esarsa = dp.DefinitionPart("esarsa-mc")
+def init_esarsa_mc(tmp_path, alphas: list[float], epsilons: list[float], n_steps: list[int]):
+
+    esarsa = dp.DefinitionPart("esarsa-mc", base=str(tmp_path))
     esarsa.add_sweepable_property("alpha", alphas)
     esarsa.add_sweepable_property("epsilon", epsilons)
     esarsa.add_sweepable_property("n_step", n_steps)
@@ -15,7 +16,7 @@ def init_esarsa_mc(alphas: list[float], epsilons: list[float], n_steps: list[int
     return esarsa
 
 
-def test_generate_configurations():
+def test_generate_configurations(tmp_path):
     """
     Tests that the dp.generate_configurations function returns the same configurations as the ones written by the dp.DefinitionPart.commit function.
 
@@ -42,7 +43,7 @@ def test_generate_configurations():
     )
 
     # write experiment definition to table
-    esarsa_mc = init_esarsa_mc(alphas, epsilons, n_steps)
+    esarsa_mc = init_esarsa_mc(tmp_path, alphas, epsilons, n_steps)
 
     # get all the hyperparameter configurations
     configs = dp.generate_configurations(esarsa_mc._properties)
