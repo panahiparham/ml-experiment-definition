@@ -4,6 +4,10 @@ test.py
 **/__pycache__/
 .vscode/
 results/
-experiments/
 .pytest_cache/
 .venv/
+
+# ignore build files
+build
+build/
+**.egg-info/
