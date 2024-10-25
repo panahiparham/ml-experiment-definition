@@ -2,8 +2,8 @@ from ml_experiment.DefinitionPart import DefinitionPart
 
 
 def test_add_sweepable_property():
-    builder = DefinitionPart('qrc')
-    builder.add_sweepable_property('key_1', [1, 2, 3])
+    builder = DefinitionPart("temp", "qrc")
+    builder.add_sweepable_property("key_1", [1, 2, 3])
 
     for i in range(1, 4):
-        builder.add_property('key_2', i)
+        builder.add_property("key_2", i)

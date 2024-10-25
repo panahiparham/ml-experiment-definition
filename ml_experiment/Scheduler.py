@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import sys
+import multiprocessing as mp
 import os
-sys.path.append(os.getcwd())
-
 import sqlite3
-from typing import Self, Callable, NamedTuple
+import subprocess
+import sys
 from dataclasses import dataclass
 from itertools import product
-from multiprocessing.pool import Pool
-import subprocess
+from typing import Callable, NamedTuple, Self
+
 from ml_experiment.metadata.MetadataTableRegistry import MetadataTableRegistry
+
 
 class RunSpec(NamedTuple):
     part_name: str
@@ -20,8 +20,7 @@ class RunSpec(NamedTuple):
 
 
 @dataclass
-class RunConfig:
-    ...
+class RunConfig: ...
 
 
 @dataclass
@@ -31,31 +30,43 @@ class LocalRunConfig(RunConfig):
     log_path: str = ".logs/"
 
 
-
 Pred = Callable[[str, int, int, int], bool]
 VersionSpec = int | dict[str, int | None] | None
 
+
 class Scheduler:
-    def __init__(self, exp_name: str, seeds: list[int], entry: str, version: VersionSpec = None, base: str | None = None):
+    def __init__(
+        self,
+        exp_name: str,
+        seeds: list[int],
+        entry: str,
+        version: VersionSpec = None,
+        base: str | None = None,
+    ):
         self.exp_name = exp_name
         self.seeds = seeds
         self.entry = entry
         self.base_path = base or os.getcwd()
         self.version = version if version is not None else -1
 
-        self.all_runs = set[RunSpec]() # TODO: polars dataframe!
+        self.all_runs = set[RunSpec]()  # TODO: polars dataframe!
 
         self._sanity_check()
 
+    def get_results_path(self) -> str:
+        return os.path.join(self.base_path, "results", self.exp_name)
+
     def __repr__(self):
-        return f'Scheduler({self.exp_name}, {self.seeds}, {self.version}, {self.all_runs})'
+        return (
+            f"Scheduler({self.exp_name}, {self.seeds}, {self.version}, {self.all_runs})"
+        )
 
     def get_all_runs(self) -> Self:
-        res_path = os.path.join(self.base_path, 'results', self.exp_name, 'metadata.db')
+        db_path = os.path.join(self.get_results_path(), "metadata.db")
 
         meta = MetadataTableRegistry()
 
-        with sqlite3.connect(res_path) as con:
+        with sqlite3.connect(db_path) as con:
             cur = con.cursor()
             parts = meta.get_parts(cur)
             resloved_ver = self._resolve_version(parts, cur, meta)
@@ -64,13 +75,16 @@ class Scheduler:
                 t = meta.get_table(cur, k, v)
                 assert t is not None
                 config_ids = t.get_configuration_ids(cur)
-                self.all_runs |= {RunSpec(k, v, c, s) for c, s in product(config_ids, self.seeds)}
+                self.all_runs |= {
+                    RunSpec(k, v, c, s) for c, s in product(config_ids, self.seeds)
+                }
 
         return self
 
-
     def filter(self, already_exists: Pred) -> Scheduler:
-        filtered = Scheduler(self.exp_name, self.seeds, self.entry, self.version, self.base_path)
+        filtered = Scheduler(
+            self.exp_name, self.seeds, self.entry, self.version, self.base_path
+        )
 
         for r in self.all_runs:
             if not already_exists(*r):
@@ -78,27 +92,40 @@ class Scheduler:
 
         return filtered
 
-
     def run(self, c: RunConfig) -> None:
         type(c)
         if isinstance(c, LocalRunConfig):
             self._run_local(c)
         else:
-            raise ValueError('Unknown RunConfig type')
-
+            raise ValueError("Unknown RunConfig type")
 
     # ----------------------
     # -- Internal Methods --
     # ----------------------
 
     def _run_local(self, c: LocalRunConfig) -> None:
-        pool = Pool(c.tasks_in_parallel)
-        pool.map(self._run_single, self.all_runs)
-
+        ctx = mp.get_context("spawn")
+        ctx.set_executable(sys.executable)
+        with ctx.Pool(c.tasks_in_parallel) as pool:
+            pool.map(self._run_single, self.all_runs)
 
     def _run_single(self, r: RunSpec) -> None:
-        subprocess.run(['python', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version)])
-
+        subprocess.run(
+            [
+                "python",
+                self.entry,
+                "--part",
+                r.part_name,
+                "--config-id",
+                str(r.config_id),
+                "--seed",
+                str(r.seed),
+                "--version",
+                str(r.version),
+                "--results_path",
+                str(self.get_results_path()),
+            ]
+        )
 
     def _resolve_version(
         self,
@@ -125,7 +152,5 @@ class Scheduler:
         return _r
 
     def _sanity_check(self):
-        res_path = os.path.join(self.base_path, 'results', self.exp_name, 'metadata.db')
-        assert os.path.exists(res_path), f'{self.exp_name} does not exist'
-
-
+        db_path = os.path.join(self.get_results_path(), "metadata.db")
+        assert os.path.exists(db_path), f"{self.exp_name} does not exist"

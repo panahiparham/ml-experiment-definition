@@ -1,23 +1,25 @@
 import os
-from itertools import product
-
-from typing import Dict, Iterable, Set
 from collections import defaultdict
+from itertools import product
+from typing import Dict, Iterable, Set
 
 import ml_experiment._utils.sqlite as sqlu
-from ml_experiment._utils.path import get_results_path
 from ml_experiment.metadata.MetadataTableRegistry import MetadataTableRegistry
 
 ValueType = int | float | str | bool
 
+
 class DefinitionPart:
-    def __init__(self, name: str, base: str | None = None):
-        self.name = name
+    def __init__(self, exp_name: str, part_name: str, base: str | None = None):
+        self.exp_name = exp_name
+        self.part_name = part_name
         self.base_path = base or os.getcwd()
-        self.get_results_path = get_results_path
 
         self._properties: Dict[str, Set[ValueType]] = defaultdict(set)
         self._prior_values: Dict[str, ValueType] = {}
+
+    def get_results_path(self) -> str:
+        return os.path.join(self.base_path, "results", self.exp_name)
 
     def add_property(
         self,
@@ -44,8 +46,9 @@ class DefinitionPart:
     def commit(self):
         configurations = list(generate_configurations(self._properties))
 
-        save_path = self.get_results_path(self.base_path)
-        db_path = os.path.join(save_path, 'metadata.db')
+        save_path = self.get_results_path()
+        db_path = os.path.join(save_path, "metadata.db")
+        print(db_path)
         con = sqlu.init_db(db_path)
         cur = con.cursor()
 
@@ -53,22 +56,28 @@ class DefinitionPart:
 
         # tag configurations with the appropriate configuration id
         # grabbing from prior tables where possible, or generating a unique id for new configs
-        next_config_id = table_registry.get_max_configuration_id(cur, self.name) + 1
+        next_config_id = (
+            table_registry.get_max_configuration_id(cur, self.part_name) + 1
+        )
         for configuration in configurations:
             config_query = self._get_configuration_without_priors(configuration)
 
-            configuration['id'] = (
-                table_registry.get_configuration_id(cur, self.name, configuration)
-                    .flat_otherwise(lambda: table_registry.get_configuration_id(cur, self.name, config_query))
-                    .or_else(next_config_id)
+            configuration["id"] = (
+                table_registry.get_configuration_id(cur, self.part_name, configuration)
+                .flat_otherwise(
+                    lambda: table_registry.get_configuration_id(
+                        cur, self.part_name, config_query
+                    )
+                )
+                .or_else(next_config_id)
             )
 
-            if configuration['id'] == next_config_id:
+            if configuration["id"] == next_config_id:
                 next_config_id += 1
 
         # determine whether we should build a new table
         # and what version to call that table
-        latest_table = table_registry.get_latest_version(cur, self.name)
+        latest_table = table_registry.get_latest_version(cur, self.part_name)
 
         next_table_version = 0
         skip_build = False
@@ -76,13 +85,15 @@ class DefinitionPart:
             next_table_version = latest_table.version + 1
 
             # check if the current latest table contains exactly the same configs
-            expected_config_ids = set(c['id'] for c in configurations)
+            expected_config_ids = set(c["id"] for c in configurations)
             current_config_ids = latest_table.get_configuration_ids(cur)
 
             skip_build = expected_config_ids == current_config_ids
 
         if not skip_build:
-            table = table_registry.create_new_table(cur, self.name, next_table_version, self._properties.keys())
+            table = table_registry.create_new_table(
+                cur, self.part_name, next_table_version, self._properties.keys()
+            )
             table.add_configurations(cur, configurations)
 
         con.commit()
