@@ -1,4 +1,5 @@
 import os
+import pytest
 import subprocess
 
 from ml_experiment.ExperimentDefinition import ExperimentDefinition
@@ -6,12 +7,15 @@ from ml_experiment.DefinitionPart import DefinitionPart
 from ml_experiment.Scheduler import LocalRunConfig, RunSpec, Scheduler
 
 
-def write_database(results_path, alphas: list[float], taus: list[float]):
-    # make table writer
-    softmaxAC = DefinitionPart("softmaxAC")
+@pytest.fixture
+def base_path(request):
+    """Overwrite the __main__.__file__ to be the path to the current file. This allows _utils.get_experiment_name to look at ./tests/acceptance/this_file.py rather than ./.venv/bin/pytest."""
+    import __main__
+    __main__.__file__ = request.path.__fspath__()
 
-    # overwrite the results path to be in the temp directory
-    softmaxAC.get_results_path = lambda *args, **kwargs: results_path
+def write_database(tmp_path, alphas: list[float], taus: list[float]):
+    # make table writer
+    softmaxAC = DefinitionPart("softmaxAC", base=str(tmp_path))
 
     # add properties to sweep
     softmaxAC.add_sweepable_property("alpha", alphas)
@@ -44,13 +48,12 @@ class StubScheduler(Scheduler):
         subprocess.run(['python', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version), '--results_path', self.results_path])
 
 
-def test_read_database(tmp_path):
+def test_read_database(tmp_path, base_path):
     """
     Test that we can retrieve the configurations from the experiment definition.
     """
 
     # expected outputs
-    results_path = os.path.join(tmp_path, "results", "temp")
     alphas = [0.05, 0.01]
     taus = [10.0, 20.0, 5.0]
     partial_configs = (
@@ -76,15 +79,12 @@ def test_read_database(tmp_path):
     )
 
     # write experiment definition to table
-    write_database(results_path, alphas, taus)
+    write_database(tmp_path, alphas, taus)
 
     # make Experiment object (versions start at 0)
     softmaxAC_mc = ExperimentDefinition(
-        part_name="softmaxAC", version=0
+        part_name="softmaxAC", version=0, base=str(tmp_path)
     )
-
-    # overwrite the results path to be in the temp directory
-    softmaxAC_mc.get_results_path = lambda *args, **kwargs: results_path
 
     # get the configuration ids
     num_configs = len(alphas) * len(taus)
@@ -102,6 +102,7 @@ def test_run_tasks(tmp_path):
     taus = [10.0, 20.0, 5.0]
     seed_num = 10
     version_num = 0
+    exp_name = "acceptance"
 
     # expected outputs
     partial_configs = (
@@ -120,9 +121,14 @@ def test_run_tasks(tmp_path):
     )
     expected_configs = {i : config for i, config in enumerate(partial_configs)}
 
+    # set experiment file name
+    experiment_file_name = f"tests/{exp_name}/my_experiment.py"
+
+    # set results path
+    results_path = os.path.join(tmp_path, "results", f"{exp_name}")
+
     # write experiment definition to table
-    results_path = os.path.join(tmp_path, "results", "temp")
-    db = write_database(results_path, alphas, taus)
+    db = write_database(tmp_path, alphas, taus)
 
     assert db.name == "softmaxAC"
     assert os.path.exists(os.path.join(results_path, "metadata.db"))
@@ -138,12 +144,9 @@ def test_run_tasks(tmp_path):
     # initialize run config
     run_conf = LocalRunConfig(tasks_in_parallel=ntasks, log_path=".logs/")
 
-    # set up experiment file
-    experiment_file_name = "tests/acceptance/my_experiment.py"
-
     # set up scheduler
     sched = StubScheduler(
-        exp_name="temp",
+        exp_name=exp_name,
         entry=experiment_file_name,
         seeds=[seed_num],
         version=version_num,
