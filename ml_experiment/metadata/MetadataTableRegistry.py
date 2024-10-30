@@ -14,7 +14,7 @@ class MetadataTableRegistry:
 
     def get_parts(self, cur: sqlite3.Cursor) -> set[str]:
         n = sqlu.get_tables(cur)
-        return set(p.split('-')[0] for p in n)
+        return set(p.rsplit('-', 1)[0] for p in n)
 
 
     def get_table(self, cur: sqlite3.Cursor, part_name: str, version: int) -> MetadataTable | None:
