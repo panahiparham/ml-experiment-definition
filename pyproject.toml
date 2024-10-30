@@ -1,4 +1,7 @@
 [tool]
+[tool.setuptools]
+packages = ['ml_experiment']
+
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.0.0"
