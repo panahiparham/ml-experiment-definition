@@ -1,6 +1,7 @@
 [tool]
-[tool.setuptools]
-packages = ['ml_experiment']
+[tool.setuptools.packages.find]
+where = ["."]  # list of folders that contain the packages (["."] by default)
+include = ["ml_experiment*"]  # package names should match these glob patterns (["*"] by default)
 
 [tool.commitizen]
 name = "cz_conventional_commits"
