@@ -126,6 +126,6 @@ class Scheduler:
 
     def _sanity_check(self):
         res_path = os.path.join(self.base_path, 'results', self.exp_name, 'metadata.db')
-        assert os.path.exists(res_path), f'{self.exp_name} does not exist'
+        assert os.path.exists(res_path), f'{res_path}: {self.exp_name} does not exist'
 
 

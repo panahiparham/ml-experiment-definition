@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
 
     steps:
       # setup the repository
@@ -26,6 +26,7 @@ jobs:
           pip install uv
           uv pip compile --extra=dev pyproject.toml -o requirements.txt
           uv pip sync requirements.txt
+          uv pip install '.[dev]'
 
       - run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
