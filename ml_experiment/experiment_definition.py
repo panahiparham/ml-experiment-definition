@@ -2,7 +2,7 @@ from typing import Any
 import os
 import sqlite3
 
-from ml_experiment.metadata.MetadataTable import MetadataTable
+from ml_experiment.metadata.metadata_table import MetadataTable
 from ml_experiment._utils.path import get_results_path
 
 class ExperimentDefinition:

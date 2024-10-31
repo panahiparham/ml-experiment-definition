@@ -1,7 +1,7 @@
 import os
 
-from ml_experiment.DefinitionPart import DefinitionPart
-from ml_experiment.ExperimentDefinition import ExperimentDefinition
+from ml_experiment.definition_part import DefinitionPart
+from ml_experiment.experiment_definition import ExperimentDefinition
 
 
 def test_ExperimentDefinition(tmp_path):

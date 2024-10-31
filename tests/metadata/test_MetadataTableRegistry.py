@@ -1,8 +1,8 @@
 import os
 import sqlite3
 
-from ml_experiment.DefinitionPart import DefinitionPart
-from ml_experiment.metadata.MetadataTableRegistry import MetadataTableRegistry
+from ml_experiment.definition_part import DefinitionPart
+from ml_experiment.metadata.metadata_table_registry import MetadataTableRegistry
 
 
 def test_get_parts(tmp_path):

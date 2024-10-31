@@ -1,4 +1,4 @@
-from ml_experiment.DefinitionPart import DefinitionPart
+from ml_experiment.definition_part import DefinitionPart
 
 
 def test_add_sweepable_property():

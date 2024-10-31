@@ -2,7 +2,7 @@ import argparse
 import os
 import random
 
-from ml_experiment.ExperimentDefinition import ExperimentDefinition
+from ml_experiment.experiment_definition import ExperimentDefinition
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--part", type=str, required=True)
