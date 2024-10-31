@@ -26,6 +26,7 @@ jobs:
           pip install uv
           uv pip compile --extra=dev pyproject.toml -o requirements.txt
           uv pip sync requirements.txt
+          uv pip install '.[dev]'
 
       - run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
