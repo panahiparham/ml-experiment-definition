@@ -1,10 +1,9 @@
 import os
 import pytest
-import subprocess
 
 from ml_experiment.ExperimentDefinition import ExperimentDefinition
 from ml_experiment.DefinitionPart import DefinitionPart
-from ml_experiment.Scheduler import LocalRunConfig, RunSpec, Scheduler
+from ml_experiment.Scheduler import LocalRunConfig, Scheduler
 
 
 @pytest.fixture
@@ -33,20 +32,6 @@ def write_database(tmp_path, alphas: list[float], taus: list[float]):
     softmaxAC.commit()
 
     return softmaxAC
-
-
-# overwrite the run_single function
-class StubScheduler(Scheduler):
-
-    # allows us to force the results path to be in a specific spot
-    def __init__(self, results_path: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.results_path = results_path
-
-    # adding the results path to the command
-    def _run_single(self: Scheduler, r: RunSpec) -> None:
-        subprocess.run(['python', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version), '--results_path', self.results_path])
-
 
 def test_read_database(tmp_path, base_path):
     """
@@ -145,12 +130,11 @@ def test_run_tasks(tmp_path):
     run_conf = LocalRunConfig(tasks_in_parallel=ntasks, log_path=".logs/")
 
     # set up scheduler
-    sched = StubScheduler(
+    sched = Scheduler(
         exp_name=exp_name,
         entry=experiment_file_name,
         seeds=[seed_num],
         version=version_num,
-        results_path=results_path,
         base = str(tmp_path),
     )
 

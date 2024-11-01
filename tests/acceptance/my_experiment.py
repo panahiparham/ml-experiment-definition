@@ -9,7 +9,7 @@ parser.add_argument("--part", type=str, required=True)
 parser.add_argument("--config-id", type=int, required=True)
 parser.add_argument("--seed", type=int, required=True)
 parser.add_argument("--version", type=int, required=True)
-parser.add_argument("--results_path", type=str, required=True)
+parser.add_argument("--results-path", type=str, required=True)
 
 class SoftmaxAC:
     def __init__(

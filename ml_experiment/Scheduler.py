@@ -41,6 +41,7 @@ class Scheduler:
         self.seeds = seeds
         self.entry = entry
         self.base_path = base or os.getcwd()
+        self.results_path = os.path.join(self.base_path, 'results', self.exp_name)
         self.version = version if version is not None else -1
 
         self.all_runs = set[RunSpec]() # TODO: polars dataframe!
@@ -51,11 +52,11 @@ class Scheduler:
         return f'Scheduler({self.exp_name}, {self.seeds}, {self.version}, {self.all_runs})'
 
     def get_all_runs(self) -> Self:
-        res_path = os.path.join(self.base_path, 'results', self.exp_name, 'metadata.db')
-
         meta = MetadataTableRegistry()
 
-        with sqlite3.connect(res_path) as con:
+        table_path = os.path.join(self.results_path, 'metadata.db')
+
+        with sqlite3.connect(table_path) as con:
             cur = con.cursor()
             parts = meta.get_parts(cur)
             resloved_ver = self._resolve_version(parts, cur, meta)
@@ -97,7 +98,7 @@ class Scheduler:
 
 
     def _run_single(self, r: RunSpec) -> None:
-        subprocess.run(['python', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version)])
+        subprocess.run(['python', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version), '--results-path', self.results_path])
 
 
     def _resolve_version(
