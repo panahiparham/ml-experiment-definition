@@ -5,33 +5,34 @@ from ml_experiment.definition_part import DefinitionPart
 from ml_experiment.experiment_definition import ExperimentDefinition
 from ml_experiment.Scheduler import LocalRunConfig, Scheduler
 
+DATABASE_NAME = "MyHyperparameterDatabase"
 
 @pytest.fixture
 def base_path(request):
-    """Overwrite the __main__.__file__ to be the path to the current file. This allows _utils.get_experiment_name to look at ./tests/acceptance/this_file.py rather than ./.venv/bin/pytest."""
+    """Overwrite the __main__.__file__ to be the path to the current file. This allows _utils.get_experiment_name to look at ./tests/acceptance/this_file.py rather than the default of ./.venv/bin/pytest."""
     import __main__
     __main__.__file__ = request.path.__fspath__()
 
 def write_database(tmp_path, alphas: list[float], taus: list[float]):
-    # make table writer
-    softmaxAC = DefinitionPart("softmaxAC", base=str(tmp_path))
+    # make database writer
+    db_writer = DefinitionPart(DATABASE_NAME, base=str(tmp_path))
 
     # add properties to sweep
-    softmaxAC.add_sweepable_property("alpha", alphas)
-    softmaxAC.add_sweepable_property("tau", taus)
+    db_writer.add_sweepable_property("alpha", alphas)
+    db_writer.add_sweepable_property("tau", taus)
 
     # add properties that are static
-    softmaxAC.add_property("n_step", 1)
-    softmaxAC.add_property("tiles", 4)
-    softmaxAC.add_property("tilings", 16)
-    softmaxAC.add_property("total_steps", 100000)
-    softmaxAC.add_property("episode_cutoff", 5000)
-    softmaxAC.add_property("seed", 10)
+    db_writer.add_property("n_step", 1)
+    db_writer.add_property("tiles", 4)
+    db_writer.add_property("tilings", 16)
+    db_writer.add_property("total_steps", 100000)
+    db_writer.add_property("episode_cutoff", 5000)
+    db_writer.add_property("seed", 10)
 
     # write the properties to the database
-    softmaxAC.commit()
+    db_writer.commit()
 
-    return softmaxAC
+    return db_writer
 
 def test_read_database(tmp_path, base_path):
     """
@@ -68,7 +69,7 @@ def test_read_database(tmp_path, base_path):
 
     # make Experiment object (versions start at 0)
     softmaxAC_mc = ExperimentDefinition(
-        part_name="softmaxAC", version=0, base=str(tmp_path)
+        part_name=DATABASE_NAME, version=0, base=str(tmp_path)
     )
 
     # get the configuration ids
@@ -115,7 +116,7 @@ def test_run_tasks(tmp_path):
     # write experiment definition to table
     db = write_database(tmp_path, alphas, taus)
 
-    assert db.name == "softmaxAC"
+    assert db.name == DATABASE_NAME
     assert os.path.exists(os.path.join(results_path, "metadata.db"))
 
     # get number of tasks to run in parallel
@@ -149,7 +150,7 @@ def test_run_tasks(tmp_path):
     for runspec in sched.all_runs:
 
         # sanity check: make sure the runspec uses the hardcoded part, version, and seed
-        assert runspec.part_name == "softmaxAC"
+        assert runspec.part_name == DATABASE_NAME
         assert runspec.version == version_num
         assert runspec.seed == seed_num
 
