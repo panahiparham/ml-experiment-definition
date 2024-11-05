@@ -1,4 +1,4 @@
-from ml_experiment import DefinitionPart as dp
+from ml_experiment import definition_part as dp
 
 
 def init_esarsa_mc(tmp_path, alphas: list[float], epsilons: list[float], n_steps: list[int]):

@@ -6,7 +6,7 @@ from collections import defaultdict
 
 import ml_experiment._utils.sqlite as sqlu
 from ml_experiment._utils.path import get_results_path
-from ml_experiment.metadata.MetadataTableRegistry import MetadataTableRegistry
+from ml_experiment.metadata.metadata_table_registry import MetadataTableRegistry
 
 ValueType = int | float | str | bool
 

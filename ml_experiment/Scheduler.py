@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from itertools import product
 from multiprocessing.pool import Pool
 import subprocess
-from ml_experiment.metadata.MetadataTableRegistry import MetadataTableRegistry
+from ml_experiment.metadata.metadata_table_registry import MetadataTableRegistry
 
 class RunSpec(NamedTuple):
     part_name: str

@@ -1,8 +1,8 @@
 import os
 import pytest
 
-from ml_experiment.ExperimentDefinition import ExperimentDefinition
-from ml_experiment.DefinitionPart import DefinitionPart
+from ml_experiment.definition_part import DefinitionPart
+from ml_experiment.experiment_definition import ExperimentDefinition
 from ml_experiment.Scheduler import LocalRunConfig, Scheduler
 
 

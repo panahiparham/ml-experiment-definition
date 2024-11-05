@@ -3,7 +3,7 @@ import ml_experiment._utils.sqlite as sqlu
 
 from typing import Dict, Iterable
 from ml_experiment._utils.maybe import Maybe
-from ml_experiment.metadata.MetadataTable import MetadataTable, ValueType
+from ml_experiment.metadata.metadata_table import MetadataTable, ValueType
 
 class MetadataTableRegistry:
     def __init__(self):
