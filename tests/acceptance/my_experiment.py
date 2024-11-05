@@ -34,15 +34,11 @@ class SoftmaxAC:
 def main():
     cmdline = parser.parse_args()
 
-    # make sure we are using softmaxAC
-    if cmdline.part != "softmaxAC":
-        raise ValueError(f"Unknown part: {cmdline.part}")
-
     # do some rng control
     random.seed(cmdline.seed)
 
     # extract configs from the database
-    exp = ExperimentDefinition("softmaxAC", cmdline.version)
+    exp = ExperimentDefinition(cmdline.part, cmdline.version)
     # TODO: don't overwrite this
     exp.get_results_path = lambda *args, **kwargs: cmdline.results_path # overwrite results path
     config = exp.get_config(cmdline.config_id)
