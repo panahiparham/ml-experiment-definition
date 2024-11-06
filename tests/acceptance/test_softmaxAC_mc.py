@@ -3,7 +3,7 @@ import pytest
 
 from ml_experiment.definition_part import DefinitionPart
 from ml_experiment.experiment_definition import ExperimentDefinition
-from ml_experiment.Scheduler import LocalRunConfig, Scheduler
+from ml_experiment.scheduler import LocalRunConfig, Scheduler
 
 
 @pytest.fixture
