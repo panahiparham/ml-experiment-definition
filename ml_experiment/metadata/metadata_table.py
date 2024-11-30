@@ -58,10 +58,11 @@ class MetadataTable:
 
         # otherwise, query the table for the id
         table_name = self.get_table_name()
-        where = ' AND '.join(f'"{k}"={configuration[k]}' for k in col_names)
+        where = ' AND '.join(f'"{k}"=?' for k in col_names)
+        conf_values = [configuration[k] for k in col_names]
 
         res = (
-            cur.execute(f"SELECT id FROM '{table_name}' WHERE {where}")
+            cur.execute(f"SELECT id FROM '{table_name}' WHERE {where}", conf_values)
             .fetchone()
         )
 
