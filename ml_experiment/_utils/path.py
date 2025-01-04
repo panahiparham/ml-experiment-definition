@@ -2,7 +2,7 @@ import os
 
 def get_experiment_name():
     import __main__
-    return __main__.__file__.split('/')[-2]
+    return __main__.__file__.split(os.path.sep)[-2]
 
 def get_results_path(base_path: str) -> str:
     return os.path.join(
