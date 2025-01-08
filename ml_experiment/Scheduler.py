@@ -5,6 +5,7 @@ import os
 sys.path.append(os.getcwd())
 
 import sqlite3
+from functools import partial
 from typing import Self, Callable, NamedTuple
 from dataclasses import dataclass
 from itertools import product
@@ -27,7 +28,7 @@ class RunConfig:
 @dataclass
 class LocalRunConfig(RunConfig):
     tasks_in_parallel: int
-
+    python_path: str = "python"
     log_path: str = ".logs/"
 
 
@@ -94,11 +95,14 @@ class Scheduler:
 
     def _run_local(self, c: LocalRunConfig) -> None:
         pool = Pool(c.tasks_in_parallel)
-        pool.map(self._run_single, self.all_runs)
+        res = pool.imap(partial(self._run_single, c), self.all_runs)
 
+        for i, _ in enumerate(res):
+            sys.stderr.write(f'\r{i+1}/{len(self.all_runs)}')
+        sys.stderr.write('\n')
 
-    def _run_single(self, r: RunSpec) -> None:
-        subprocess.run(['python', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version), '--results-path', self.results_path])
+    def _run_single(self, c: LocalRunConfig, r: RunSpec) -> None:
+        subprocess.run([c.python_path, '-m', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version), '--results-path', self.results_path, '--silent'])
 
 
     def _resolve_version(
