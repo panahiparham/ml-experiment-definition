@@ -21,7 +21,7 @@ typeCheckingMode = 'standard'
 useLibraryCodeForTypes = true
 
 [project]
-name = "ml-experiment-definition"
+name = "ml-experiment"
 version = "0.0.0"
 description = ""
 authors = [
