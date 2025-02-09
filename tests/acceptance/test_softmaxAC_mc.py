@@ -12,9 +12,9 @@ def base_path(request):
     import __main__
     __main__.__file__ = request.path.__fspath__()
 
-def write_database(tmp_path, alphas: list[float], taus: list[float]):
+def write_database(tmp_path, experiment: str, alphas: list[float], taus: list[float]):
     # make table writer
-    softmaxAC = DefinitionPart("softmaxAC", base=str(tmp_path))
+    softmaxAC = DefinitionPart("softmaxAC", experiment, base=str(tmp_path))
 
     # add properties to sweep
     softmaxAC.add_sweepable_property("alpha", alphas)
@@ -64,7 +64,7 @@ def test_read_database(tmp_path, base_path):
     )
 
     # write experiment definition to table
-    write_database(tmp_path, alphas, taus)
+    write_database(tmp_path, 'acceptance', alphas, taus)
 
     # make Experiment object (versions start at 0)
     softmaxAC_mc = ExperimentDefinition(
@@ -107,13 +107,13 @@ def test_run_tasks(tmp_path):
     expected_configs = {i : config for i, config in enumerate(partial_configs)}
 
     # set experiment file name
-    experiment_file_name = f"tests/{exp_name}/my_experiment.py"
+    experiment_file_name = os.getcwd() + f"/tests/{exp_name}/my_experiment.py"
 
     # set results path
-    results_path = os.path.join(tmp_path, "results", f"{exp_name}")
+    results_path = os.path.join(tmp_path, "results", exp_name)
 
     # write experiment definition to table
-    db = write_database(tmp_path, alphas, taus)
+    db = write_database(tmp_path, exp_name, alphas, taus)
 
     assert db.name == "softmaxAC"
     assert os.path.exists(os.path.join(results_path, "metadata.db"))
@@ -162,7 +162,3 @@ def test_run_tasks(tmp_path):
         with open(output_path, "r") as f:
             output = f.read()
             assert output.strip() == expected_output
-
-
-
-
