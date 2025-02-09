@@ -14,7 +14,7 @@ select = ['F', 'E', 'W', 'B']
 ignore = ['E501', 'E701', 'B023']
 
 [tool.pyright]
-include = ['ml_experiment']
+include = ['ml_experiment', 'tests']
 venvPath = '.'
 venv = '.venv'
 typeCheckingMode = 'standard'
