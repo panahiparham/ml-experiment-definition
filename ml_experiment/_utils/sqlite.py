@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sqlite3
 
 from typing import Set, List
@@ -11,7 +12,7 @@ def create_table(cur: sqlite3.Cursor, table_name: str, columns: List[str]):
     columns_str = ', '.join(columns)
     cur.execute(f"CREATE TABLE '{table_name}' ({columns_str})")
 
-def init_db(db_path: str):
+def init_db(db_path: str | Path):
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     con = sqlite3.connect(db_path)
     return con

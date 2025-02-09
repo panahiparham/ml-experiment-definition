@@ -19,7 +19,7 @@ def test_get_parts(tmp_path):
 
     # find database file
     meta = MetadataTableRegistry()
-    res_path = os.path.join(df.get_results_path(df.base_path), "metadata.db")
+    res_path = os.path.join(df.results_path, "metadata.db")
 
     ## initial test to get part name
     # get parts

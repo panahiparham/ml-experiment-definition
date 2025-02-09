@@ -11,10 +11,10 @@ from ml_experiment.metadata.metadata_table_registry import MetadataTableRegistry
 ValueType = int | float | str | bool
 
 class DefinitionPart:
-    def __init__(self, name: str, base: str | None = None):
+    def __init__(self, name: str, experiment: str | None = None, base: str | None = None):
         self.name = name
         self.base_path = base or os.getcwd()
-        self.get_results_path = get_results_path
+        self.results_path = get_results_path(self.base_path, experiment)
 
         self._properties: Dict[str, Set[ValueType]] = defaultdict(set)
         self._prior_values: Dict[str, ValueType] = {}
@@ -44,8 +44,7 @@ class DefinitionPart:
     def commit(self):
         configurations = list(generate_configurations(self._properties))
 
-        save_path = self.get_results_path(self.base_path)
-        db_path = os.path.join(save_path, 'metadata.db')
+        db_path = os.path.join(self.results_path, 'metadata.db')
         con = sqlu.init_db(db_path)
         cur = con.cursor()
 

@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path
 import random
 
 from ml_experiment.experiment_definition import ExperimentDefinition
@@ -10,6 +11,7 @@ parser.add_argument("--config-id", type=int, required=True)
 parser.add_argument("--seed", type=int, required=True)
 parser.add_argument("--version", type=int, required=True)
 parser.add_argument("--results-path", type=str, required=True)
+parser.add_argument('--silent', action='store_true', default=False, required=False)
 
 class SoftmaxAC:
     def __init__(
@@ -42,9 +44,8 @@ def main():
     random.seed(cmdline.seed)
 
     # extract configs from the database
-    exp = ExperimentDefinition("softmaxAC", cmdline.version)
-    # TODO: don't overwrite this
-    exp.get_results_path = lambda *args, **kwargs: cmdline.results_path # overwrite results path
+    base = Path(cmdline.results_path).parents[1]
+    exp = ExperimentDefinition("softmaxAC", cmdline.version, experiment='acceptance', base=str(base))
     config = exp.get_config(cmdline.config_id)
 
     # make our dummy agent

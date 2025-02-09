@@ -25,6 +25,13 @@ class Maybe(Generic[T]):
         return f(self._v)
 
 
+    def otherwise(self, f: Callable[[], T | None]) -> Maybe[T]:
+        if self._v is None:
+            return Maybe(f())
+
+        return self
+
+
     def flat_otherwise(self, f: Callable[[], Maybe[T]]) -> Maybe[T]:
         if self._v is None:
             return f()

@@ -95,14 +95,14 @@ class Scheduler:
 
     def _run_local(self, c: LocalRunConfig) -> None:
         pool = Pool(c.tasks_in_parallel)
-        res = pool.imap(partial(self._run_single, c), self.all_runs)
+        res = pool.imap_unordered(partial(self._run_single, c), self.all_runs)
 
         for i, _ in enumerate(res):
             sys.stderr.write(f'\r{i+1}/{len(self.all_runs)}')
         sys.stderr.write('\n')
 
     def _run_single(self, c: LocalRunConfig, r: RunSpec) -> None:
-        subprocess.run([c.python_path, '-m', self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version), '--results-path', self.results_path, '--silent'])
+        subprocess.run([c.python_path, self.entry, '--part', r.part_name, '--config-id', str(r.config_id), '--seed', str(r.seed), '--version', str(r.version), '--results-path', self.results_path, '--silent'])
 
 
     def _resolve_version(
@@ -132,5 +132,3 @@ class Scheduler:
     def _sanity_check(self):
         res_path = os.path.join(self.base_path, 'results', self.exp_name, 'metadata.db')
         assert os.path.exists(res_path), f'{res_path}: {self.exp_name} does not exist'
-
-
