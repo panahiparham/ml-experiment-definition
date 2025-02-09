@@ -7,3 +7,5 @@ results/
 experiments/
 .pytest_cache/
 .venv/
+uv.lock
+*.egg-info

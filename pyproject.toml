@@ -28,7 +28,10 @@ authors = [
     {name = "Parham Panahi", email = "parham1@ualberta.ca"},
     {name = "Andy Patterson", email = "ap3@ualberta.ca"},
 ]
-dependencies = []
+dependencies = [
+    "click>=8.1.8",
+    "rich~=13.9",
+]
 requires-python = ">=3.11,<3.13"
 readme = "README.md"
 license = {text = "MIT"}
@@ -38,13 +41,20 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
-[project.optional-dependencies]
+[project.scripts]
+exp = "ml_experiment.cli:main"
+
+[dependency-groups]
 dev = [
-    "pip",
-    "ruff",
-    "pytest",
-    "pytest-cov",
-    "pyright",
-    "commitizen",
-    "pre-commit",
+    "commitizen>=4.2.1",
+    "pip>=25.0",
+    "pre-commit>=4.1.0",
+    "pyright>=1.1.393",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.9.5",
 ]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
