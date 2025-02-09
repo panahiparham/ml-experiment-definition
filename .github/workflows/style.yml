@@ -11,8 +11,6 @@ jobs:
       # setup the repository
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          cache: 'pip'
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
